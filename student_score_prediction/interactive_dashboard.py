@@ -7,6 +7,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import os
+import importlib.util
+
+# Handle optional dependencies gracefully
+STATSMODELS_AVAILABLE = importlib.util.find_spec("statsmodels") is not None
 
 # Set page configuration
 st.set_page_config(
@@ -210,15 +214,22 @@ with tab2:
     
     with col3:
         st.subheader("📖 Hours vs Score")
+        # Create scatter plot without trendline to avoid statsmodels dependency
         fig_scatter1 = px.scatter(
             data, 
             x="Hours_Studied", 
             y="Final_Score",
-            trendline="ols",
             title="Study Hours vs Final Score",
             color="Final_Score",
             color_continuous_scale="viridis"
         )
+        # Add manual trendline using numpy polyfit
+        import numpy as np
+        x_vals = data["Hours_Studied"]
+        y_vals = data["Final_Score"]
+        z = np.polyfit(x_vals, y_vals, 1)
+        p = np.poly1d(z)
+        fig_scatter1.add_scatter(x=x_vals, y=p(x_vals), mode='lines', name='Trend Line', line=dict(color='red', width=2))
         st.plotly_chart(fig_scatter1, use_container_width=True)
     
     with col4:
@@ -227,11 +238,16 @@ with tab2:
             data, 
             x="Attendance", 
             y="Final_Score",
-            trendline="ols",
             title="Attendance vs Final Score",
             color="Final_Score",
             color_continuous_scale="viridis"
         )
+        # Add manual trendline using numpy polyfit
+        x_vals2 = data["Attendance"]
+        y_vals2 = data["Final_Score"]
+        z2 = np.polyfit(x_vals2, y_vals2, 1)
+        p2 = np.poly1d(z2)
+        fig_scatter2.add_scatter(x=x_vals2, y=p2(x_vals2), mode='lines', name='Trend Line', line=dict(color='red', width=2))
         st.plotly_chart(fig_scatter2, use_container_width=True)
     
     # 3D Scatter plot
@@ -309,9 +325,15 @@ with tab3:
             test_results, 
             x="Actual", 
             y="Predicted",
-            title="Actual vs Predicted Scores",
-            trendline="ols"
+            title="Actual vs Predicted Scores"
         )
+        # Add manual trendline using numpy polyfit
+        x_vals = test_results["Actual"]
+        y_vals = test_results["Predicted"]
+        z = np.polyfit(x_vals, y_vals, 1)
+        p = np.poly1d(z)
+        fig_actual_pred.add_scatter(x=x_vals, y=p(x_vals), mode='lines', name='Trend Line', line=dict(color='blue', width=2))
+        
         fig_actual_pred.add_shape(
             type="line",
             x0=test_results['Actual'].min(),
